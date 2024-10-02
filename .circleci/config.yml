@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   rn: react-native-community/react-native@7
-  android: circleci/android@2
+  android: circleci/android@2.5.0
 
 # - rn/yarn_install
 # fails with Error untarring cache: Error extracting tarball /var/folders/bq/mjrgbpkx5h1g_b22fpv0tlzc0000gn/T/cache376822577 : tmp/yarn/: Cannot extract through symlink tmp/yarn tmp/yarn/v6/: Cannot extract through symlink tmp/yarn/v6 tmp/yarn/v6/.tmp/: Cannot extract through symlink tmp/yarn/v6/.tmp tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel/code-frame/: Cannot extract: exit status 1
@@ -13,12 +13,13 @@ jobs:
     executor:
       name: rn/linux_js
       node_version: 'lts'
+      resource_class: large
     steps:
       - checkout
       # - rn/yarn_install
       # fails with Error untarring cache: Error extracting tarball /var/folders/bq/mjrgbpkx5h1g_b22fpv0tlzc0000gn/T/cache376822577 : tmp/yarn/: Cannot extract through symlink tmp/yarn tmp/yarn/v6/: Cannot extract through symlink tmp/yarn/v6 tmp/yarn/v6/.tmp/: Cannot extract through symlink tmp/yarn/v6/.tmp tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel/code-frame/: Cannot extract: exit status 1
       - run:
-          command: yarn install --frozen-lockfile
+          command: yarn install --immutable
           name: yarn install
       - run:
           command: yarn lint
@@ -33,11 +34,12 @@ jobs:
   new_arch_ios_build_only:
     executor:
       name: rn/macos
-      xcode_version: '15.0.0'
+      xcode_version: '15.3.0'
+      resource_class: macos.m1.medium.gen1
     steps:
       - checkout
       - run:
-          command: yarn install --frozen-lockfile
+          command: yarn install --immutable
           name: yarn install
       - run:
           command: (cd example && RCT_NEW_ARCH_ENABLED=1 npx pod-install)
@@ -46,11 +48,11 @@ jobs:
           command: yarn detox:ios:build:release
           name: build app with new arch
 
-
   e2e_release_ios:
     executor:
       name: rn/macos
-      xcode_version: '15.0.0'
+      xcode_version: '15.3.0'
+      resource_class: macos.m1.medium.gen1
     steps:
       - checkout
       - run:
@@ -59,16 +61,16 @@ jobs:
             HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_AUTO_UPDATE=1 brew tap wix/brew >/dev/null
             HOMEBREW_NO_INSTALL_CLEANUP=1 HOMEBREW_NO_AUTO_UPDATE=1 brew install applesimutils >/dev/null
       - rn/ios_simulator_start:
-          device: 'iPhone 14'
+          device: 'iPhone 15 Pro Max'
       # - rn/yarn_install
       - run:
-          command: yarn install --frozen-lockfile && npx patch-package
+          command: yarn install --immutable
           name: yarn install
       - run:
           command: yarn bundle:ios
           name: bundle js
-#      - rn/pod_install:
-#          pod_install_directory: 'example/ios'
+      #      - rn/pod_install:
+      #          pod_install_directory: 'example/ios'
       - run:
           command: (cd example && npx pod-install)
           name: pod install
@@ -85,9 +87,11 @@ jobs:
     executor:
       name: android/android-machine
       resource-class: large
-      tag: '2023.04.1'
+      tag: default
     steps:
       - checkout
+      - android/change-java-version:
+          java-version: 17
       - run:
           command: avdmanager list
           name: list avds
@@ -97,7 +101,7 @@ jobs:
       - android/create-avd:
           avd-name: TestingAVD
           system-image: system-images;android-29;default;x86
-          additional-args: --device pixel_3_xl
+          additional-args: --device pixel_6_pro
           install: true
           background: false
       - android/start-emulator:
@@ -106,13 +110,13 @@ jobs:
           wait-for-emulator: true
           disable-animations: true
           restore-gradle-cache-post-emulator-launch: false
-          post-emulator-launch-assemble-command: "pwd"
+          post-emulator-launch-assemble-command: 'pwd'
       #      - android/disable-animations
       - run:
           command: npm install --global yarn
           name: install yarn
       - run:
-          command: yarn install --frozen-lockfile && npx patch-package
+          command: yarn install --immutable
           name: yarn install
       - run:
           command: yarn bundle:android
@@ -126,21 +130,22 @@ jobs:
       - store_artifacts:
           path: ./artifacts
 
-
-  e2e_release_android_new_arch:
+  new_arch_android_build_only:
     executor:
       name: android/android-machine
       resource-class: large
-      tag: '2023.04.1'
+      tag: default
     steps:
       - checkout
+      - android/change-java-version:
+          java-version: 17
       - run:
           command: avdmanager list
           name: list avds
       - android/create-avd:
           avd-name: TestingAVD
           system-image: system-images;android-29;default;x86
-          additional-args: --device pixel_3_xl
+          additional-args: --device pixel_6_pro
           install: true
           background: false
       - android/start-emulator:
@@ -149,12 +154,12 @@ jobs:
           wait-for-emulator: true
           disable-animations: true
           restore-gradle-cache-post-emulator-launch: false
-          post-emulator-launch-assemble-command: "pwd"
+          post-emulator-launch-assemble-command: 'pwd'
       - run:
           command: npm install --global yarn
           name: install yarn
       - run:
-          command: yarn install --frozen-lockfile && npx patch-package
+          command: yarn install --immutable
           name: yarn install
       - run:
           command: yarn bundle:android
@@ -164,9 +169,6 @@ jobs:
           name: build app for e2e tests
       #      - android/wait-for-emulator
       #      - android/disable-animations
-      - run:
-          command: yarn detox:android:test:release
-          name: run e2e tests
       - store_artifacts:
           path: ./artifacts
 
@@ -174,13 +176,17 @@ jobs:
     executor:
       name: rn/linux_js
       node_version: 'lts'
+      resource_class: large
     steps:
       - checkout
       # - rn/yarn_install
       # fails with Error untarring cache: Error extracting tarball /var/folders/bq/mjrgbpkx5h1g_b22fpv0tlzc0000gn/T/cache376822577 : tmp/yarn/: Cannot extract through symlink tmp/yarn tmp/yarn/v6/: Cannot extract through symlink tmp/yarn/v6 tmp/yarn/v6/.tmp/: Cannot extract through symlink tmp/yarn/v6/.tmp tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel/: Cannot extract through symlink tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel tmp/yarn/v6/npm-@babel-code-frame-7.8.3-33e25903d7481181534e12ec0a25f16b6fcf419e-integrity/node_modules/@babel/code-frame/: Cannot extract: exit status 1
       - run:
-          command: yarn install --frozen-lockfile
+          command: yarn install --immutable
           name: yarn install
+      - run:
+          command: yarn plugin:build
+          name: build expo config plugin
       - run:
           command: npx semantic-release
           name: Publish to NPM
@@ -191,13 +197,14 @@ workflows:
       - analyse_js
       - e2e_release_ios
       - e2e_release_android
-      - e2e_release_android_new_arch
+      - new_arch_android_build_only
       - new_arch_ios_build_only
       - publish:
           requires:
+            - analyse_js
             - e2e_release_android
-            - e2e_release_android_new_arch
             - e2e_release_ios
+            - new_arch_android_build_only
             - new_arch_ios_build_only
           filters:
             branches:

@@ -6,10 +6,6 @@ Please support maintenance of the module with a monthly donation or help us with
 
 See this [issue](https://github.com/react-native-datetimepicker/datetimepicker/issues/313) for context. Thank you!
 
-<a href="https://opencollective.com/react-native-datetimepicker/donate" target="_blank">
-  <img src="https://opencollective.com/react-native-datetimepicker/backers.svg?width=890" width=890 />
-</a>
-
 <br>
 <br>
 <br>
@@ -74,8 +70,10 @@ React Native date & time picker component for iOS, Android and Windows (please n
   - [Expo users notice](#expo-users-notice)
   - [Getting started](#getting-started)
   - [Usage](#usage)
+  - [React Native Support](#react-native-support)
   - [Localization note](#localization-note)
   - [Android imperative API](#android-imperative-api)
+  - [Android styling](#android-styling)
   - [Props / params](#component-props--params-of-the-android-imperative-api)
     - [`mode` (`optional`)](#mode-optional)
     - [`display` (`optional`)](#display-optional)
@@ -141,6 +139,17 @@ Autolinking is not yet implemented on Windows, so [manual installation ](/docs/m
 #### RN >= 0.60
 
 If you are using RN >= 0.60, only run `npx pod-install`. Then rebuild your project.
+
+## React Native Support
+
+Check the `react-native` version support table below to find the corresponding `datetimepicker` version to meet support requirements. Maintenance is only provided for last 3 stable react-native versions.
+
+| react-native version | version |
+| -------------------- | ------- |
+| 0.73.0+              | 7.6.3+  |
+| <=0.72.0             | <=7.6.2 |
+| 0.70.0+              | 7.0.1+  |
+| <0.70.0              | <=7.0.0 |
 
 ## Usage
 
@@ -275,6 +284,12 @@ DateTimePickerAndroid.dismiss(mode: AndroidNativeProps['mode'])
 ```
 
 The reason we recommend the imperative API is: on Android, the date/time picker opens in a dialog, similar to `ReactNative.alert()` from core react native. The imperative api models this behavior better than the declarative component api. While the component approach is perfectly functional, based on the issue tracker history, it appears to be more prone to introducing bugs.
+
+### Android styling
+
+Styling of the dialogs on Android can be easily customized by using the provided config plugin, provided that you use a [Expo development build](https://docs.expo.dev/develop/development-builds/introduction/). The plugin allows you to configure color properties that cannot be set at runtime and requires building a new app binary to take effect.
+
+Refer to this documentation for more information: [android-styling.md](/docs/android-styling.md).
 
 ## Component props / params of the Android imperative api
 
@@ -412,7 +427,7 @@ Reference: https://docs.microsoft.com/en-us/uwp/api/windows.globalization.dateti
 <RNDateTimePicker dateFormat="dayofweek day month" />
 ```
 
-#### `firstDayOfWeek` (`optional`, `Windows only`)
+#### `firstDayOfWeek` (`optional`, `Android and Windows only`)
 
 Indicates which day is shown as the first day of the week.
 
@@ -589,6 +604,8 @@ Please see [manual-installation.md](/docs/manual-installation.md)
 4. Run `yarn start` to start Metro Bundler
 5. Run `yarn run start:ios` or `yarn run start:android` or `yarn run start:windows`
 6. To do any development on the library, open the example project (in the `example` folder) in xCode or Android Studio. The example project depends on the library code, which you can edit and observe any changes in the example project.
+
+This project is tested with BrowserStack.
 
 [circle-ci-badge]: https://img.shields.io/circleci/project/github/react-native-community/datetimepicker/master.svg?style=flat-square
 [circle-ci-status]: https://circleci.com/gh/react-native-datetimepicker/datetimepicker.svg?style=svg
